@@ -36,7 +36,10 @@ for c in cnts:
     (x, y, w, h) = cv2.boundingRect(c)
     
     out = thresh[y:y+h, x:x+w]
-    out = imutils.resize(out, height=20)
+    if out.shape[0] > out.shape[1]:
+        out = imutils.resize(out, height=20)
+    else:
+        out = imutils.resize(out, width=20)
     out = preprocess(out, 28, 28)
     
     show = out.copy()

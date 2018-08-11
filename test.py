@@ -11,9 +11,14 @@ import imutils
 from keras.models import load_model
 from imutils import contours
 
-def preprocess(img, width, height):
-    padW = int((width - img.shape[1]) / 2.0)
-    padH = int((width - img.shape[0]) / 2.0)
+def preprocess(img):
+    if img.shape[0] > img.shape[1]:
+        img = imutils.resize(img, height=20)
+    else:
+        img = imutils.resize(img, width=20)
+        
+    padW = int((28 - img.shape[1]) / 2.0)
+    padH = int((28 - img.shape[0]) / 2.0)
     
     image = cv2.copyMakeBorder(img, padH, padH, padW, padW, cv2.BORDER_CONSTANT, value=0)
     image = cv2.resize(image, (28, 28))
@@ -21,9 +26,9 @@ def preprocess(img, width, height):
     return image
     
 
-model = load_model("save/lenet_BS64_epoch3.h5")
+model = load_model("save/lenet_BS64_epoch3.h5")   # load the model
 
-img = cv2.imread("test.png")
+img = cv2.imread("test.png")  # load image
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
 thresh = cv2.dilate(thresh, cv2.getStructuringElement(cv2.MORPH_RECT,(5,5)))
@@ -36,16 +41,12 @@ for c in cnts:
     (x, y, w, h) = cv2.boundingRect(c)
     
     out = thresh[y:y+h, x:x+w]
-    if out.shape[0] > out.shape[1]:
-        out = imutils.resize(out, height=20)
-    else:
-        out = imutils.resize(out, width=20)
-    out = preprocess(out, 28, 28)
+    out = preprocess(out)
     
     show = out.copy()
     
-    out = np.expand_dims(out, 0)
-    out = np.expand_dims(out, -1)
+    out = np.expand_dims(out, 0)  # add first (batch) dimension
+    out = np.expand_dims(out, -1)  # add last (channels) dimension
     
     sm = model.predict(out)
     prediction = np.argmax(sm, axis=-1)
